@@ -18,6 +18,9 @@ public class AppMain {
     private static final BigDecimal Y_MIN = new BigDecimal("-5");
     private static final BigDecimal Y_MAX = new BigDecimal("3");
     private static final int MAX_LENGTH = 15;
+    private static final BigDecimal TWO = BigDecimal.valueOf(2);
+    private static final BigDecimal FOUR = BigDecimal.valueOf(4);
+
 
     private static final String CONTENT_LENGTH = "CONTENT_LENGTH";
 
@@ -32,9 +35,11 @@ public class AppMain {
                 String body = readBody();
                 Map<String, String> params = parseForm(body);
                 Point point = validate(params);
+                boolean hit = isHit(point);
 
                 String answer = "<h1>Answer</h1>"
-                        + "<p>x = " + point.x() + ", y = " + point.y() + ", r = " + point.r() + "</p>";
+                        + "<p>x = " + point.x() + ", y = " + point.y() + ", r = " + point.r() + "</p>"
+                        + "<p>" + (hit ? "Dentro del área" : "Fuera del área") + "</p>";
                 sendResponse(200, "OK", answer);
 
             } catch (IllegalArgumentException e) {
@@ -49,7 +54,7 @@ public class AppMain {
 
     private static String readBody() throws IOException {
         String lengthText = FCGIInterface.request.params.getProperty(CONTENT_LENGTH, "0");
-        int contentLength = Integer.parseInt(lengthText.trim());
+        int contentLength = Integer.parseInt(lengthText.trim());   // "abc" → NumberFormatException → 400
 
         byte[] buffer = new byte[contentLength];
         int readBytes = 0;
@@ -96,6 +101,30 @@ public class AppMain {
             throw new IllegalArgumentException("r debe ser uno de " + R_VALUES);
         }
         return new Point(x, y, r);
+    }
+
+    private static boolean isHit(Point p) {
+        return inCircle(p.x(), p.y(), p.r()) || inRectangle(p.x(), p.y(), p.r()) || inTriangle(p.x(), p.y(), p.r());
+    }
+
+
+    private static boolean inCircle(BigDecimal x, BigDecimal y, BigDecimal r) {
+        if (x.signum() < 0 || y.signum() < 0) return false;
+        BigDecimal d = x.multiply(x).add(y.multiply(y)).multiply(FOUR);
+        return d.compareTo(r.multiply(r)) <= 0;
+    }
+
+
+    private static boolean inRectangle(BigDecimal x, BigDecimal y, BigDecimal r) {
+        if (x.signum() > 0 || y.signum() < 0) return false;
+        return x.compareTo(r.negate()) >= 0 && y.compareTo(r) <= 0;
+    }
+
+
+    private static boolean inTriangle(BigDecimal x, BigDecimal y, BigDecimal r) {
+        if (x.signum() > 0 || y.signum() > 0) return false;
+        BigDecimal twoX = TWO.multiply(x);
+        return twoX.compareTo(r.negate()) >= 0 && twoX.add(y).add(r).signum() >= 0;
     }
 
     private static BigDecimal parseNumber(Map<String, String> params, String name) {
