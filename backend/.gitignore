@@ -51,3 +51,5 @@ logs/
 
 ### IntelliJ (carpeta completa) ###
 .idea/
+### IntelliJ run configurations ###
+.run/
