@@ -27,13 +27,13 @@ public class AppMain {
         PointValidator validator = new PointValidator();
         AreaChecker areaChecker = new AreaChecker();
         ResultRepository repository = new InMemoryResultRepository();
-
+        Router router = new Router();
         Command checkPointCommand = new CheckPointCommand(validator, areaChecker, repository, resultJsonWriter);
-
+        router.register("POST", "/check", checkPointCommand);
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
                 Request request = readRequest();
-                Response response = checkPointCommand.execute(request);
+                Response response = router.handle(request);
                 sendResponse(response);
 
             } catch (HttpException e) {
