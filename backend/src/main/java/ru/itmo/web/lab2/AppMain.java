@@ -10,12 +10,12 @@ import ru.itmo.web.lab2.http.Command;
 import ru.itmo.web.lab2.http.HttpException;
 import ru.itmo.web.lab2.http.Request;
 import ru.itmo.web.lab2.http.Response;
+import ru.itmo.web.lab2.repository.InMemoryResultRepository;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +30,9 @@ public class AppMain {
 
         PointValidator validator = new PointValidator();
         AreaChecker areaChecker = new AreaChecker();
-        List<HitResult> history = new ArrayList<>();
-        Command checkCommand = request -> check(request, validator, areaChecker, history);
+        var repository = new InMemoryResultRepository();
+
+        Command checkCommand = request -> check(request, validator, areaChecker, repository);
 
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
@@ -50,7 +51,7 @@ public class AppMain {
     }
 
     private static Response check(Request request, PointValidator validator, AreaChecker areaChecker,
-                                  List<HitResult> history) {
+                                  InMemoryResultRepository repository) {
         long start = System.nanoTime();
 
         Point point;
@@ -65,9 +66,9 @@ public class AppMain {
         Instant now = Instant.now();
 
         HitResult result = new HitResult(point, hit, now, execTimeNs);
-        history.add(result);
+        repository.add(result);
 
-        return new Response(200, HTML, renderPage(result, history, now));
+        return new Response(200, HTML, renderPage(result, repository.findAll(), now));
     }
 
     private static Request readRequest() throws IOException {
