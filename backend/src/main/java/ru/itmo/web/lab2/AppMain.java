@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.List;
@@ -27,20 +29,30 @@ public class AppMain {
     private record Point(BigDecimal x, BigDecimal y, BigDecimal r) {
     }
 
+    private record HitResult(Point point, boolean hit, Instant time, long execTimeNs) {
+    }
+
     public static void main(String[] args) {
         var fastCGIJava = new FCGIInterface();
 
+        List<HitResult> history = new ArrayList<>();
+
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
+                long start = System.nanoTime();
+
                 String body = readBody();
                 Map<String, String> params = parseForm(body);
                 Point point = validate(params);
                 boolean hit = isHit(point);
 
-                String answer = "<h1>Answer</h1>"
-                        + "<p>x = " + point.x() + ", y = " + point.y() + ", r = " + point.r() + "</p>"
-                        + "<p>" + (hit ? "Dentro del área" : "Fuera del área") + "</p>";
-                sendResponse(200, "OK", answer);
+                long execTimeNs = System.nanoTime() - start;
+                Instant now = Instant.now();
+
+                HitResult result = new HitResult(point, hit, now, execTimeNs);
+                history.add(result);
+
+                sendResponse(200, "OK", renderPage(result, history, now));
 
             } catch (IllegalArgumentException e) {
                 sendResponse(400, "Bad Request", "<h1>Error</h1><p>" + e.getMessage() + "</p>");
@@ -150,6 +162,26 @@ public class AppMain {
 
     private static List<BigDecimal> decimals(String... values) {
         return Arrays.stream(values).map(BigDecimal::new).toList();
+    }
+
+    private static String renderPage(HitResult result, List<HitResult> history, Instant now) {
+        StringBuilder html = new StringBuilder();
+        html.append("<h1>Resultado</h1>")
+                .append("<p>").append(result.hit() ? "Dentro del área" : "Fuera del área").append("</p>")
+                .append("<p>Hora actual: ").append(now).append("</p>")
+                .append("<p>Tiempo de ejecución: ").append(result.execTimeNs() / 1000).append(" µs</p>")
+                .append("<table border=\"1\"><tr><th>x</th><th>y</th><th>r</th><th>Resultado</th><th>Hora</th><th>µs</th></tr>");
+        for (HitResult row : history) {
+            html.append("<tr>")
+                    .append("<td>").append(row.point().x()).append("</td>")
+                    .append("<td>").append(row.point().y()).append("</td>")
+                    .append("<td>").append(row.point().r()).append("</td>")
+                    .append("<td>").append(row.hit() ? "Sí" : "No").append("</td>")
+                    .append("<td>").append(row.time()).append("</td>")
+                    .append("<td>").append(row.execTimeNs() / 1000).append("</td>")
+                    .append("</tr>");
+        }
+        return html.append("</table>").toString();
     }
 
     private static void sendResponse(int status, String statusText, String body) {
