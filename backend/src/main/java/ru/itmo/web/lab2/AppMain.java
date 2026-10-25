@@ -1,38 +1,37 @@
 package ru.itmo.web.lab2;
 
 import com.fastcgi.FCGIInterface;
+import ru.itmo.web.lab2.command.ResultJsonWriter;
 import ru.itmo.web.lab2.domain.AreaChecker;
 import ru.itmo.web.lab2.domain.HitResult;
 import ru.itmo.web.lab2.domain.InvalidPointException;
 import ru.itmo.web.lab2.domain.Point;
 import ru.itmo.web.lab2.domain.PointValidator;
-import ru.itmo.web.lab2.http.Command;
-import ru.itmo.web.lab2.http.HttpException;
-import ru.itmo.web.lab2.http.Request;
-import ru.itmo.web.lab2.http.Response;
+import ru.itmo.web.lab2.http.*;
 import ru.itmo.web.lab2.repository.InMemoryResultRepository;
+import ru.itmo.web.lab2.repository.ResultRepository;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class AppMain {
 
     private static final String CONTENT_LENGTH = "CONTENT_LENGTH";
-    private static final String HTML = "text/html; charset=utf-8";
 
     public static void main(String[] args) {
         var fastCGIJava = new FCGIInterface();
-
+        Json json = new Json();
+        ErrorHandler errorHandler = new JsonErrorHandler(json);
+        ResultJsonWriter resultJsonWriter= new ResultJsonWriter(json);
         PointValidator validator = new PointValidator();
         AreaChecker areaChecker = new AreaChecker();
-        var repository = new InMemoryResultRepository();
+        ResultRepository repository = new InMemoryResultRepository();
 
-        Command checkCommand = request -> check(request, validator, areaChecker, repository);
+        Command checkCommand = request -> check(request, validator, areaChecker, repository, resultJsonWriter);
 
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
@@ -41,17 +40,17 @@ public class AppMain {
                 sendResponse(response);
 
             } catch (HttpException e) {
-                sendResponse(new Response(e.getStatus(), HTML, "<h1>Error</h1><p>" + e.getMessage() + "</p>"));
+                sendResponse(errorHandler.handle(e));
 
             } catch (Exception e) {
                 e.printStackTrace(System.err);
-                sendResponse(new Response(500, HTML, "<h1>Internal server error</h1>"));
+                sendResponse(errorHandler.handleUnexpected(e));
             }
         }
     }
 
     private static Response check(Request request, PointValidator validator, AreaChecker areaChecker,
-                                  InMemoryResultRepository repository) {
+                                  ResultRepository repository, ResultJsonWriter resultJsonWriter) {
         long start = System.nanoTime();
 
         Point point;
@@ -68,7 +67,7 @@ public class AppMain {
         HitResult result = new HitResult(point, hit, now, execTimeNs);
         repository.add(result);
 
-        return new Response(200, HTML, renderPage(result, repository.findAll(), now));
+        return new Response(200, Json.CONTENT_TYPE, resultJsonWriter.writeCheckResponse(result, repository.findAll(), now));
     }
 
     private static Request readRequest() throws IOException {
@@ -114,26 +113,6 @@ public class AppMain {
             map.put(name, value);
         }
         return map;
-    }
-
-    private static String renderPage(HitResult result, List<HitResult> history, Instant now) {
-        StringBuilder html = new StringBuilder();
-        html.append("<h1>Result</h1>")
-                .append("<p>").append(result.hit() ? "Inside the area" : "Outside the area").append("</p>")
-                .append("<p>Current time: ").append(now).append("</p>")
-                .append("<p>Execution time: ").append(result.execTimeNs() / 1000).append(" µs</p>")
-                .append("<table border=\"1\"><tr><th>x</th><th>y</th><th>r</th><th>Result</th><th>Time</th><th>µs</th></tr>");
-        for (HitResult row : history) {
-            html.append("<tr>")
-                    .append("<td>").append(row.point().x()).append("</td>")
-                    .append("<td>").append(row.point().y()).append("</td>")
-                    .append("<td>").append(row.point().r()).append("</td>")
-                    .append("<td>").append(row.hit() ? "Yes" : "No").append("</td>")
-                    .append("<td>").append(row.time()).append("</td>")
-                    .append("<td>").append(row.execTimeNs() / 1000).append("</td>")
-                    .append("</tr>");
-        }
-        return html.append("</table>").toString();
     }
 
     private static void sendResponse(Response response) {
