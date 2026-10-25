@@ -1,11 +1,9 @@
 package ru.itmo.web.lab2;
 
 import com.fastcgi.FCGIInterface;
+import ru.itmo.web.lab2.command.CheckPointCommand;
 import ru.itmo.web.lab2.command.ResultJsonWriter;
 import ru.itmo.web.lab2.domain.AreaChecker;
-import ru.itmo.web.lab2.domain.HitResult;
-import ru.itmo.web.lab2.domain.InvalidPointException;
-import ru.itmo.web.lab2.domain.Point;
 import ru.itmo.web.lab2.domain.PointValidator;
 import ru.itmo.web.lab2.http.*;
 import ru.itmo.web.lab2.repository.InMemoryResultRepository;
@@ -14,7 +12,6 @@ import ru.itmo.web.lab2.repository.ResultRepository;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,12 +28,12 @@ public class AppMain {
         AreaChecker areaChecker = new AreaChecker();
         ResultRepository repository = new InMemoryResultRepository();
 
-        Command checkCommand = request -> check(request, validator, areaChecker, repository, resultJsonWriter);
+        Command checkPointCommand = new CheckPointCommand(validator, areaChecker, repository, resultJsonWriter);
 
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
                 Request request = readRequest();
-                Response response = checkCommand.execute(request);
+                Response response = checkPointCommand.execute(request);
                 sendResponse(response);
 
             } catch (HttpException e) {
@@ -47,27 +44,6 @@ public class AppMain {
                 sendResponse(errorHandler.handleUnexpected(e));
             }
         }
-    }
-
-    private static Response check(Request request, PointValidator validator, AreaChecker areaChecker,
-                                  ResultRepository repository, ResultJsonWriter resultJsonWriter) {
-        long start = System.nanoTime();
-
-        Point point;
-        try {
-            point = validator.validate(request.params());
-        } catch (InvalidPointException e) {
-            throw new HttpException(400, e.getMessage());
-        }
-        boolean hit = areaChecker.isHit(point);
-
-        long execTimeNs = System.nanoTime() - start;
-        Instant now = Instant.now();
-
-        HitResult result = new HitResult(point, hit, now, execTimeNs);
-        repository.add(result);
-
-        return new Response(200, Json.CONTENT_TYPE, resultJsonWriter.writeCheckResponse(result, repository.findAll(), now));
     }
 
     private static Request readRequest() throws IOException {
