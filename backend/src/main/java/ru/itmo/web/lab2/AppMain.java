@@ -59,7 +59,7 @@ public class AppMain {
 
             } catch (Exception e) {
                 e.printStackTrace(System.err);
-                sendResponse(500, "Internal Server Error", "<h1>Error interno</h1>");
+                sendResponse(500, "Internal Server Error", "<h1>Internal server error</h1>");
             }
         }
     }
@@ -91,7 +91,7 @@ public class AppMain {
                     ? URLDecoder.decode(parts[1], StandardCharsets.UTF_8)
                     : "";
             if (map.containsKey(name)) {
-                throw new IllegalArgumentException("Parámetro repetido: " + name);
+                throw new IllegalArgumentException("Duplicate parameter: " + name);
             }
             map.put(name, value);
         }
@@ -104,13 +104,13 @@ public class AppMain {
         BigDecimal r = parseNumber(params, "r");
 
         if (!contains(X_VALUES, x)) {
-            throw new IllegalArgumentException("x debe ser uno de " + X_VALUES);
+            throw new IllegalArgumentException("x must be one of " + X_VALUES);
         }
         if (y.compareTo(Y_MIN) < 0 || y.compareTo(Y_MAX) > 0) {
-            throw new IllegalArgumentException("y debe estar entre -5 y 3");
+            throw new IllegalArgumentException("y must be between -5 and 3");
         }
         if (!contains(R_VALUES, r)) {
-            throw new IllegalArgumentException("r debe ser uno de " + R_VALUES);
+            throw new IllegalArgumentException("r must be one of " + R_VALUES);
         }
         return new Point(x, y, r);
     }
@@ -142,11 +142,11 @@ public class AppMain {
     private static BigDecimal parseNumber(Map<String, String> params, String name) {
         String raw = params.get(name);
         if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("Falta el parámetro " + name);
+            throw new IllegalArgumentException("Missing parameter: " + name);
         }
         String text = raw.trim().replace(',', '.');
         if (text.length() > MAX_LENGTH || !text.matches("-?\\d+(\\.\\d+)?")) {
-            throw new IllegalArgumentException(name + " debe ser un número (máx. " + MAX_LENGTH + " caracteres)");
+            throw new IllegalArgumentException(name + " must be a number (max. " + MAX_LENGTH + " characters)");
         }
         return new BigDecimal(text);
     }
@@ -166,17 +166,17 @@ public class AppMain {
 
     private static String renderPage(HitResult result, List<HitResult> history, Instant now) {
         StringBuilder html = new StringBuilder();
-        html.append("<h1>Resultado</h1>")
-                .append("<p>").append(result.hit() ? "Dentro del área" : "Fuera del área").append("</p>")
-                .append("<p>Hora actual: ").append(now).append("</p>")
-                .append("<p>Tiempo de ejecución: ").append(result.execTimeNs() / 1000).append(" µs</p>")
-                .append("<table border=\"1\"><tr><th>x</th><th>y</th><th>r</th><th>Resultado</th><th>Hora</th><th>µs</th></tr>");
+        html.append("<h1>Result</h1>")
+                .append("<p>").append(result.hit() ? "Inside the area" : "Outside the area").append("</p>")
+                .append("<p>Current time: ").append(now).append("</p>")
+                .append("<p>Execution time: ").append(result.execTimeNs() / 1000).append(" µs</p>")
+                .append("<table border=\"1\"><tr><th>x</th><th>y</th><th>r</th><th>Result</th><th>Time</th><th>µs</th></tr>");
         for (HitResult row : history) {
             html.append("<tr>")
                     .append("<td>").append(row.point().x()).append("</td>")
                     .append("<td>").append(row.point().y()).append("</td>")
                     .append("<td>").append(row.point().r()).append("</td>")
-                    .append("<td>").append(row.hit() ? "Sí" : "No").append("</td>")
+                    .append("<td>").append(row.hit() ? "Yes" : "No").append("</td>")
                     .append("<td>").append(row.time()).append("</td>")
                     .append("<td>").append(row.execTimeNs() / 1000).append("</td>")
                     .append("</tr>");
