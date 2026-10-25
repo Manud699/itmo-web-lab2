@@ -1,6 +1,10 @@
 package ru.itmo.web.lab2;
 
 import com.fastcgi.FCGIInterface;
+import ru.itmo.web.lab2.http.Command;
+import ru.itmo.web.lab2.http.HttpException;
+import ru.itmo.web.lab2.http.Request;
+import ru.itmo.web.lab2.http.Response;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -25,6 +29,7 @@ public class AppMain {
 
 
     private static final String CONTENT_LENGTH = "CONTENT_LENGTH";
+    private static final String HTML = "text/html; charset=utf-8";
 
     private record Point(BigDecimal x, BigDecimal y, BigDecimal r) {
     }
@@ -36,37 +41,53 @@ public class AppMain {
         var fastCGIJava = new FCGIInterface();
 
         List<HitResult> history = new ArrayList<>();
+        Command checkCommand = request -> check(request, history);
 
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
-                long start = System.nanoTime();
+                Request request = readRequest();
+                Response response = checkCommand.execute(request);
+                sendResponse(response);
 
-                String body = readBody();
-                Map<String, String> params = parseForm(body);
-                Point point = validate(params);
-                boolean hit = isHit(point);
-
-                long execTimeNs = System.nanoTime() - start;
-                Instant now = Instant.now();
-
-                HitResult result = new HitResult(point, hit, now, execTimeNs);
-                history.add(result);
-
-                sendResponse(200, "OK", renderPage(result, history, now));
-
-            } catch (IllegalArgumentException e) {
-                sendResponse(400, "Bad Request", "<h1>Error</h1><p>" + e.getMessage() + "</p>");
+            } catch (HttpException e) {
+                sendResponse(new Response(e.getStatus(), HTML, "<h1>Error</h1><p>" + e.getMessage() + "</p>"));
 
             } catch (Exception e) {
                 e.printStackTrace(System.err);
-                sendResponse(500, "Internal Server Error", "<h1>Internal server error</h1>");
+                sendResponse(new Response(500, HTML, "<h1>Internal server error</h1>"));
             }
         }
     }
 
+    private static Response check(Request request, List<HitResult> history) {
+        long start = System.nanoTime();
+
+        Point point = validate(request.params());
+        boolean hit = isHit(point);
+
+        long execTimeNs = System.nanoTime() - start;
+        Instant now = Instant.now();
+
+        HitResult result = new HitResult(point, hit, now, execTimeNs);
+        history.add(result);
+
+        return new Response(200, HTML, renderPage(result, history, now));
+    }
+
+    private static Request readRequest() throws IOException {
+        String method = FCGIInterface.request.params.getProperty("REQUEST_METHOD", "GET");
+        String path = FCGIInterface.request.params.getProperty("PATH_INFO", "");
+        return new Request(method, path, parseForm(readBody()));
+    }
+
     private static String readBody() throws IOException {
         String lengthText = FCGIInterface.request.params.getProperty(CONTENT_LENGTH, "0");
-        int contentLength = Integer.parseInt(lengthText.trim());   // "abc" → NumberFormatException → 400
+        int contentLength;
+        try {
+            contentLength = Integer.parseInt(lengthText.trim());
+        } catch (NumberFormatException e) {
+            throw new HttpException(400, "Invalid Content-Length");
+        }
 
         byte[] buffer = new byte[contentLength];
         int readBytes = 0;
@@ -91,7 +112,7 @@ public class AppMain {
                     ? URLDecoder.decode(parts[1], StandardCharsets.UTF_8)
                     : "";
             if (map.containsKey(name)) {
-                throw new IllegalArgumentException("Duplicate parameter: " + name);
+                throw new HttpException(400, "Duplicate parameter: " + name);
             }
             map.put(name, value);
         }
@@ -104,13 +125,13 @@ public class AppMain {
         BigDecimal r = parseNumber(params, "r");
 
         if (!contains(X_VALUES, x)) {
-            throw new IllegalArgumentException("x must be one of " + X_VALUES);
+            throw new HttpException(400, "x must be one of " + X_VALUES);
         }
         if (y.compareTo(Y_MIN) < 0 || y.compareTo(Y_MAX) > 0) {
-            throw new IllegalArgumentException("y must be between -5 and 3");
+            throw new HttpException(400, "y must be between -5 and 3");
         }
         if (!contains(R_VALUES, r)) {
-            throw new IllegalArgumentException("r must be one of " + R_VALUES);
+            throw new HttpException(400, "r must be one of " + R_VALUES);
         }
         return new Point(x, y, r);
     }
@@ -142,11 +163,11 @@ public class AppMain {
     private static BigDecimal parseNumber(Map<String, String> params, String name) {
         String raw = params.get(name);
         if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("Missing parameter: " + name);
+            throw new HttpException(400, "Missing parameter: " + name);
         }
         String text = raw.trim().replace(',', '.');
         if (text.length() > MAX_LENGTH || !text.matches("-?\\d+(\\.\\d+)?")) {
-            throw new IllegalArgumentException(name + " must be a number (max. " + MAX_LENGTH + " characters)");
+            throw new HttpException(400, name + " must be a number (max. " + MAX_LENGTH + " characters)");
         }
         return new BigDecimal(text);
     }
@@ -184,11 +205,11 @@ public class AppMain {
         return html.append("</table>").toString();
     }
 
-    private static void sendResponse(int status, String statusText, String body) {
+    private static void sendResponse(Response response) {
         try {
-            byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
-            String head = "HTTP/1.1 " + status + " " + statusText + "\r\n"
-                    + "Content-Type: text/html; charset=utf-8\r\n"
+            byte[] bodyBytes = response.body().getBytes(StandardCharsets.UTF_8);
+            String head = "HTTP/1.1 " + response.status() + " " + reasonPhrase(response.status()) + "\r\n"
+                    + "Content-Type: " + response.contentType() + "\r\n"
                     + "Content-Length: " + bodyBytes.length + "\r\n"
                     + "\r\n";
             System.out.write(head.getBytes(StandardCharsets.UTF_8));
@@ -197,5 +218,15 @@ public class AppMain {
         } catch (IOException e) {
             e.printStackTrace(System.err);
         }
+    }
+
+    private static String reasonPhrase(int status) {
+        return switch (status) {
+            case 200 -> "OK";
+            case 400 -> "Bad Request";
+            case 404 -> "Not Found";
+            case 405 -> "Method Not Allowed";
+            default -> "Internal Server Error";
+        };
     }
 }
