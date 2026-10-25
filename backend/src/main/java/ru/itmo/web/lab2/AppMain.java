@@ -1,47 +1,37 @@
 package ru.itmo.web.lab2;
 
 import com.fastcgi.FCGIInterface;
+import ru.itmo.web.lab2.domain.AreaChecker;
+import ru.itmo.web.lab2.domain.HitResult;
+import ru.itmo.web.lab2.domain.InvalidPointException;
+import ru.itmo.web.lab2.domain.Point;
+import ru.itmo.web.lab2.domain.PointValidator;
 import ru.itmo.web.lab2.http.Command;
 import ru.itmo.web.lab2.http.HttpException;
 import ru.itmo.web.lab2.http.Request;
 import ru.itmo.web.lab2.http.Response;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class AppMain {
 
-    private static final List<BigDecimal> X_VALUES = decimals("-2", "-1.5", "-1", "-0.5", "0", "0.5", "1", "1.5", "2");
-    private static final List<BigDecimal> R_VALUES = decimals("1", "1.5", "2", "2.5", "3");
-    private static final BigDecimal Y_MIN = new BigDecimal("-5");
-    private static final BigDecimal Y_MAX = new BigDecimal("3");
-    private static final int MAX_LENGTH = 15;
-    private static final BigDecimal TWO = BigDecimal.valueOf(2);
-    private static final BigDecimal FOUR = BigDecimal.valueOf(4);
-
-
     private static final String CONTENT_LENGTH = "CONTENT_LENGTH";
     private static final String HTML = "text/html; charset=utf-8";
-
-    private record Point(BigDecimal x, BigDecimal y, BigDecimal r) {
-    }
-
-    private record HitResult(Point point, boolean hit, Instant time, long execTimeNs) {
-    }
 
     public static void main(String[] args) {
         var fastCGIJava = new FCGIInterface();
 
+        PointValidator validator = new PointValidator();
+        AreaChecker areaChecker = new AreaChecker();
         List<HitResult> history = new ArrayList<>();
-        Command checkCommand = request -> check(request, history);
+        Command checkCommand = request -> check(request, validator, areaChecker, history);
 
         while (fastCGIJava.FCGIaccept() >= 0) {
             try {
@@ -59,11 +49,17 @@ public class AppMain {
         }
     }
 
-    private static Response check(Request request, List<HitResult> history) {
+    private static Response check(Request request, PointValidator validator, AreaChecker areaChecker,
+                                  List<HitResult> history) {
         long start = System.nanoTime();
 
-        Point point = validate(request.params());
-        boolean hit = isHit(point);
+        Point point;
+        try {
+            point = validator.validate(request.params());
+        } catch (InvalidPointException e) {
+            throw new HttpException(400, e.getMessage());
+        }
+        boolean hit = areaChecker.isHit(point);
 
         long execTimeNs = System.nanoTime() - start;
         Instant now = Instant.now();
@@ -117,72 +113,6 @@ public class AppMain {
             map.put(name, value);
         }
         return map;
-    }
-
-    private static Point validate(Map<String, String> params) {
-        BigDecimal x = parseNumber(params, "x");
-        BigDecimal y = parseNumber(params, "y");
-        BigDecimal r = parseNumber(params, "r");
-
-        if (!contains(X_VALUES, x)) {
-            throw new HttpException(400, "x must be one of " + X_VALUES);
-        }
-        if (y.compareTo(Y_MIN) < 0 || y.compareTo(Y_MAX) > 0) {
-            throw new HttpException(400, "y must be between -5 and 3");
-        }
-        if (!contains(R_VALUES, r)) {
-            throw new HttpException(400, "r must be one of " + R_VALUES);
-        }
-        return new Point(x, y, r);
-    }
-
-    private static boolean isHit(Point p) {
-        return inCircle(p.x(), p.y(), p.r()) || inRectangle(p.x(), p.y(), p.r()) || inTriangle(p.x(), p.y(), p.r());
-    }
-
-
-    private static boolean inCircle(BigDecimal x, BigDecimal y, BigDecimal r) {
-        if (x.signum() < 0 || y.signum() < 0) return false;
-        BigDecimal d = x.multiply(x).add(y.multiply(y)).multiply(FOUR);
-        return d.compareTo(r.multiply(r)) <= 0;
-    }
-
-
-    private static boolean inRectangle(BigDecimal x, BigDecimal y, BigDecimal r) {
-        if (x.signum() > 0 || y.signum() < 0) return false;
-        return x.compareTo(r.negate()) >= 0 && y.compareTo(r) <= 0;
-    }
-
-
-    private static boolean inTriangle(BigDecimal x, BigDecimal y, BigDecimal r) {
-        if (x.signum() > 0 || y.signum() > 0) return false;
-        BigDecimal twoX = TWO.multiply(x);
-        return twoX.compareTo(r.negate()) >= 0 && twoX.add(y).add(r).signum() >= 0;
-    }
-
-    private static BigDecimal parseNumber(Map<String, String> params, String name) {
-        String raw = params.get(name);
-        if (raw == null || raw.isBlank()) {
-            throw new HttpException(400, "Missing parameter: " + name);
-        }
-        String text = raw.trim().replace(',', '.');
-        if (text.length() > MAX_LENGTH || !text.matches("-?\\d+(\\.\\d+)?")) {
-            throw new HttpException(400, name + " must be a number (max. " + MAX_LENGTH + " characters)");
-        }
-        return new BigDecimal(text);
-    }
-
-    private static boolean contains(List<BigDecimal> allowed, BigDecimal value) {
-        for (BigDecimal a : allowed) {
-            if (a.compareTo(value) == 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static List<BigDecimal> decimals(String... values) {
-        return Arrays.stream(values).map(BigDecimal::new).toList();
     }
 
     private static String renderPage(HitResult result, List<HitResult> history, Instant now) {
