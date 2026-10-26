@@ -7,6 +7,7 @@ import { FormRendererFacade } from '../facade/FormRendererFacade.js';
 import { AppStore } from './AppStore.js';
 import { History } from './History.js';
 import { AppRenderer } from '../view/AppRenderer.js';
+import { ServerClient } from '../transport/ServerClient.js';
 
 export class AppBootstrapper {
     #fieldValidators;
@@ -16,6 +17,7 @@ export class AppBootstrapper {
     #history;
     #renderer;
     #controller;
+    #server;
 
     boot() {
         this.#initValidators();
@@ -79,5 +81,11 @@ export class AppBootstrapper {
             this.#history.record('INIT', null, null, this.#store.createMemento());
             this.#renderer.render(this.#store.getState());
         }
+    }
+
+    #initTrasnport(){
+        const SERVER_URL = '/fcgi-bin/hello-world.jar';
+        this.#server = new ServerClient(SERVER_URL, 5000);
+        this.#controller.loadResults(); 
     }
 }

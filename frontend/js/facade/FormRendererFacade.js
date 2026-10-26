@@ -1,17 +1,18 @@
-import { calculateHit } from '../core/geometry.js';
-
 export class FormRendererFacade {
     #store;
     #history;
     #formValidator;   
     #fieldValidators; 
     #invalidFields = new Set(); 
+    #server;
+    #sending = false;
 
-    constructor(store, history, formValidator, fieldValidators) {
+    constructor(store, history, formValidator, fieldValidators, server) {
         this.#store = store;
         this.#history = history;
         this.#formValidator = formValidator;
         this.#fieldValidators = fieldValidators;
+        this.#server = server;
     }
 
     setupEventListeners() {
@@ -30,6 +31,16 @@ export class FormRendererFacade {
             ?.addEventListener('click', () => this.#handleClearHistory());
 
         document.addEventListener('keydown', e => this.#handleShortcut(e));
+    }
+
+    async loadResults() {
+        try {
+            const data = await this.#server.results();
+            this.#store.setPoints(data.history);
+            this.#showStatus('');
+        } catch (e) {
+            this.#showStatus(e.message);
+        }
     }
 
     restore(id) {
@@ -78,10 +89,10 @@ export class FormRendererFacade {
                             this.#store.createMemento());
     }
 
-    #handleFormSubmit(event) {
+    async #handleFormSubmit(event) {
         event.preventDefault();
 
-        if (this.#invalidFields.size > 0) return;
+        if (this.#sending || this.#invalidFields.size > 0) return;
         ['x', 'y', 'r'].forEach(f => this.#clearError(f));
 
         const { form } = this.#store.getState();
@@ -92,9 +103,26 @@ export class FormRendererFacade {
         }
 
         const { x, y, r } = validation.data;
-        const point = { x, y, r, isHit: calculateHit(x, y, r), time: Date.now() };
-        this.#store.addPoint(point);
-        this.#history.record('ADD_POINT', null, point, this.#store.createMemento());
+        this.#setSending(true);
+        try {
+            const data = await this.#server.check(x, y, r);
+            this.#store.setPoints(data.history);
+            this.#history.record('ADD_POINT', null, data.result, this.#store.createMemento());
+            this.#showStatus('');
+        } catch (e) {
+            this.#showStatus(e.message);
+        } finally {
+            this.#setSending(false);
+        }
+    }
+
+    #setSending(sending) {
+        this.#sending = sending;
+        document.getElementById('submit-btn').disabled = sending;
+    }
+
+    #showStatus(message) {
+        document.getElementById('server-status').textContent = message;
     }
 
     #handleClear() {

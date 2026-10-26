@@ -1,5 +1,3 @@
-import { calculateHit } from '../core/geometry.js';
-
 const timeFormatter = new Intl.DateTimeFormat('ru-RU',{
     year:'numeric', month:'numeric', day:'numeric',
     hour:'2-digit', minute:'2-digit', second:'2-digit'
@@ -30,16 +28,13 @@ export class AppRenderer{
     #renderResults(points){
         const tbody = document.querySelector('#table-results tbody');
         tbody.replaceChildren(...points.map(p => this.#row([
-            p.x, p.y, p.r, formatTime(p.time), p.isHit ? 'Hit' : 'Miss'
+            p.x, p.y, p.r, formatTime(p.time), p.hit ? 'Hit' : 'Miss'
         ])));
     }
 
     #renderCanvas(r,points){
         this.#plane.drawBaseGraph(r);
-        points.forEach(p => {
-            const isHit = r ? calculateHit(p.x, p.y, r) : p.isHit;
-            this.#plane.drawPoint(p.x, p.y, isHit);
-        });
+        points.forEach(p => this.#plane.drawPoint(p.x, Number(p.y), p.hit));
     }
 
     renderLog({ entries, branches }, { onRestore, onRestoreBranch }) {

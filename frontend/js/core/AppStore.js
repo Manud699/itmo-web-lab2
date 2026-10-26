@@ -27,10 +27,10 @@ export class AppStore extends Observable {
     setY(y) { return this.#set('y', y); }
     setR(r) { return this.#set('r', r); }
 
-    addPoint(point){
-        this.#state.points.push(point);
+    setPoints(points){
+        this.#state.points = structuredClone(points);
         this.notify(this.getState());
-    } 
+    }
     
     clearPoints(){
         const old = this.#state.points.length;
@@ -44,7 +44,9 @@ export class AppStore extends Observable {
     }
 
     restoreMemento(memento){
+        const points = this.#state.points;
         this.#state = structuredClone(memento);
+        this.#state.points = points;
         this.notify(this.getState());
     }
 
