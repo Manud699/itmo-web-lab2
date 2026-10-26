@@ -2,6 +2,7 @@ package ru.itmo.web.lab2.bootstrap;
 
 import com.fastcgi.FCGIInterface;
 import ru.itmo.web.lab2.command.CheckPointCommand;
+import ru.itmo.web.lab2.command.GetResultsCommand;
 import ru.itmo.web.lab2.command.ResultJsonWriter;
 import ru.itmo.web.lab2.domain.AreaChecker;
 import ru.itmo.web.lab2.domain.PointValidator;
@@ -43,6 +44,8 @@ public class Bootstrapper {
         Router router = new Router();
         router.register("POST", "/check",
                 new CheckPointCommand(validator, areaChecker, repository, resultJsonWriter));
+        router.register("GET", "/results",
+                new GetResultsCommand(resultJsonWriter, repository));
         return router;
     }
 }

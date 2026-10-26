@@ -40,4 +40,10 @@ public class ResultJsonWriter {
                 + ",\"time\":" + r.time().toEpochMilli()
                 + ",\"execTimeNs\":" + r.execTimeNs() + "}";
     }
+
+    public String writeResultsResponse(List<HitResult> history, Instant now) {
+        return "{\"history\":" + writeHistory(history)
+                + ",\"currentTime\":" + now.toEpochMilli() + "}";
+    }
+
 }
