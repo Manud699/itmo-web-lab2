@@ -21,11 +21,11 @@ export class AppRenderer{
     } 
 
     #renderForm({x, y, r}){
-        document.querySelectorAll('input[name=inputX]')
-            .forEach(el => { el.checked = Number(el.value) === x; });
-        document.getElementById('inputY').value = y; 
-        document.getElementById('selectR').value = r ?? ''; 
-    }
+    document.getElementById('selectX').value = x ?? '';
+    document.getElementById('inputY').value = y;
+    document.querySelectorAll('input[name=inputR]')
+        .forEach(el => { el.checked = Number(el.value) === r; });
+}
 
     #renderResults(points){
         const tbody = document.querySelector('#table-results tbody');

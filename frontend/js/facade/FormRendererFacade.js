@@ -15,12 +15,12 @@ export class FormRendererFacade {
     }
 
     setupEventListeners() {
-        document.querySelectorAll('input[name=inputX]').forEach(el =>
-            el.addEventListener('change', e => this.#handleFieldChange('x', e.target.value)));
+        document.getElementById('selectX')
+            .addEventListener('change', e => this.#handleFieldChange('x', e.target.value));
         document.getElementById('inputY')
             .addEventListener('change', e => this.#handleFieldChange('y', e.target.value));
-        document.getElementById('selectR')
-            .addEventListener('change', e => this.#handleFieldChange('r', e.target.value));
+        document.querySelectorAll('input[name=inputR]').forEach(el => 
+            el.addEventListener('change', e => this.#handleFieldChange('r', e.target.checked ? e.target.value : '')));
 
         document.getElementById('formulario')
             .addEventListener('submit', e => this.#handleFormSubmit(e));

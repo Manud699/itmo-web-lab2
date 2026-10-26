@@ -29,7 +29,7 @@ export class AppBootstrapper {
 
     #initValidators() {
         this.#fieldValidators = {
-            x: new OptionsValidator([-3, -2, -1, 0, 1, 2, 3, 4, 5]),
+            x: new OptionsValidator([-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]),
             y: new RangeValidator(-5, 3),
             r: new OptionsValidator([1, 1.5, 2, 2.5, 3])
         };
@@ -38,7 +38,7 @@ export class AppBootstrapper {
     }
 
     #initModel() {
-        this.#repository = new LocalStorageRep('lab1_history');
+        this.#repository = new LocalStorageRep('lab2_history');
         this.#store = new AppStore();
         this.#history = new History();
     }
