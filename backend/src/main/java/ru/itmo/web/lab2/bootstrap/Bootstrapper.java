@@ -2,6 +2,7 @@ package ru.itmo.web.lab2.bootstrap;
 
 import com.fastcgi.FCGIInterface;
 import ru.itmo.web.lab2.command.CheckPointCommand;
+import ru.itmo.web.lab2.command.ClearResultsCommand;
 import ru.itmo.web.lab2.command.GetResultsCommand;
 import ru.itmo.web.lab2.command.ResultJsonWriter;
 import ru.itmo.web.lab2.domain.AreaChecker;
@@ -22,7 +23,7 @@ import ru.itmo.web.lab2.transport.FcgiServer;
  */
 public class Bootstrapper {
 
-    public FcgiServer createServer() {
+    public FcgiServer createServer() {  
         Json json = new Json();
         ErrorHandler errorHandler = new JsonErrorHandler(json);
         Router router = createRouter(json);
@@ -46,6 +47,8 @@ public class Bootstrapper {
                 new CheckPointCommand(validator, areaChecker, repository, resultJsonWriter));
         router.register("GET", "/results",
                 new GetResultsCommand(resultJsonWriter, repository));
+        router.register("POST", "/clear",
+                new ClearResultsCommand(resultJsonWriter, repository));
         return router;
     }
 }

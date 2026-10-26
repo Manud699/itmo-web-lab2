@@ -20,4 +20,9 @@ public class InMemoryResultRepository implements ResultRepository{
     public List<HitResult> findAll(String sessionId){
         return List.copyOf(historyBySession.getOrDefault(sessionId, List.of()));
     }
+
+    @Override
+    public void clear(String sessionId){
+        historyBySession.remove(sessionId);
+    }
 }

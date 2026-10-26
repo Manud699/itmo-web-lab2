@@ -8,4 +8,5 @@ public interface ResultRepository {
 
     void add(String sessionId, HitResult hitResult);
     List<HitResult> findAll(String sessionId);
+    void clear(String sessionId);
 }
