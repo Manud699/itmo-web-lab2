@@ -19,6 +19,10 @@ export class ServerClient {
         return this.#request('GET', '/results');
     }
 
+    async clear() {
+        return this.#request('POST', '/clear');
+    }
+
     async #request(method, path, body) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), this.#timeoutMs);

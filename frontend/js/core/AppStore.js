@@ -32,13 +32,6 @@ export class AppStore extends Observable {
         this.notify(this.getState());
     }
     
-    clearPoints(){
-        const old = this.#state.points.length;
-        this.#state.points = []; 
-        this.notify(this.getState());
-        return old; 
-    } 
-
     createMemento(){
         return takeSnapshot(this.#state);
     }

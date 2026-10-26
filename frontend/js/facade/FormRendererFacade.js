@@ -133,9 +133,21 @@ export class FormRendererFacade {
         document.getElementById('server-time').textContent = `Server time: ${formatTime(ms)}`;
     }
 
-    #handleClear() {
-        const old = this.#store.clearPoints();
-        this.#history.record('CLEAR_POINTS', old, 0, this.#store.createMemento());
+    async #handleClear() {
+        if (this.#sending) return;
+        const old = this.#store.getState().points.length;
+        this.#setSending(true);
+        try {
+            const data = await this.#server.clear();
+            this.#store.setPoints(data.history);
+            this.#history.record('CLEAR_POINTS', old, 0, this.#store.createMemento());
+            this.#showServerTime(data.currentTime);
+            this.#showStatus('');
+        } catch (e) {
+            this.#showStatus(e.message);
+        } finally {
+            this.#setSending(false);
+        }
     }
 
     #handleClearHistory() {
