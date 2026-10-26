@@ -9,17 +9,34 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Input adapter: turns the current FastCGI request (params + stdin) into a Request.
  */
 public class FcgiRequestAdapter {
 
+    public static final String SESSION_COOKIE = "SESSIONID";
+    private static final Pattern UUID_FORMAT =
+            Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+
     public Request readRequest() throws IOException {
         String method = FCGIInterface.request.params.getProperty("REQUEST_METHOD", "GET");
         String path = FCGIInterface.request.params.getProperty("PATH_INFO", "");
         String body = readBody();
-        return new Request(method, path, parseForm(body));
+        String sessionId = readSessionId(FCGIInterface.request.params.getProperty("HTTP_COOKIE", ""));
+        return new Request(method, path, parseForm(body), sessionId);
+    }
+
+
+    private String readSessionId(String cookieHeader) {
+        for (String cookie : cookieHeader.split(";")) {
+            String[] parts = cookie.trim().split("=", 2);
+            if (parts.length == 2 && parts[0].equals(SESSION_COOKIE)) {
+                return UUID_FORMAT.matcher(parts[1]).matches() ? parts[1] : null;
+            }
+        }
+        return null;
     }
 
 

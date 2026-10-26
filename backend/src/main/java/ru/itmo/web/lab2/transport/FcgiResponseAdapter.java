@@ -15,10 +15,18 @@ public class FcgiResponseAdapter {
         String head = "HTTP/1.1 " + response.status() + " " + reasonPhrase(response.status()) + "\r\n"
                 + "Content-Type: " + response.contentType() + "\r\n"
                 + "Content-Length: " + bodyBytes.length + "\r\n"
+                + sessionCookie(response)
                 + "\r\n";
         System.out.write(head.getBytes(StandardCharsets.UTF_8));
         System.out.write(bodyBytes);
         System.out.flush();
+    }
+
+
+    private String sessionCookie(Response response) {
+        if (response.newSessionId() == null) return "";
+        return "Set-Cookie: " + FcgiRequestAdapter.SESSION_COOKIE + "=" + response.newSessionId()
+                + "; Path=/; HttpOnly; SameSite=Strict\r\n";
     }
 
 

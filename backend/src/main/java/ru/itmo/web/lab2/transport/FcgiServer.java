@@ -4,6 +4,7 @@ import com.fastcgi.FCGIInterface;
 import ru.itmo.web.lab2.http.*;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * The FastCGI request loop: read -> route -> write.
@@ -38,7 +39,11 @@ public class FcgiServer {
     private Response handle() {
         try {
             Request request = requestAdapter.readRequest();
-            return router.handle(request);
+            if (request.sessionId() != null) {
+                return router.handle(request);
+            }
+            String sessionId = UUID.randomUUID().toString();
+            return router.handle(request.withSessionId(sessionId)).withNewSession(sessionId);
         } catch (HttpException e) {
             return errorHandler.handle(e);
         } catch (Exception e) {
