@@ -51,23 +51,26 @@ export class CoordinatePlaneRenderer {
     }
 
     #drawHitShapes(r) {
-        const scaledR = r * this.#scale;
-        const scaledHalfR = (r / 2) * this.#scale;
+    const scaledR = r * this.#scale;
+    const scaledHalfR = (r / 2) * this.#scale;
 
-        this.#ctx.fillStyle = '#3399FF';
-        this.#ctx.beginPath();
+    this.#ctx.fillStyle = '#3399FF';
 
-        this.#ctx.fillRect(this.#centerX - scaledR, this.#centerY - scaledHalfR, scaledR, scaledHalfR);
+    this.#ctx.fillRect(this.#centerX - scaledR, this.#centerY - scaledR, scaledR, scaledR);
 
-        this.#ctx.moveTo(this.#centerX, this.#centerY);
-        this.#ctx.lineTo(this.#centerX + scaledR, this.#centerY);
-        this.#ctx.lineTo(this.#centerX, this.#centerY - scaledHalfR);
-        this.#ctx.fill();
+    this.#ctx.beginPath();
+    this.#ctx.moveTo(this.#centerX, this.#centerY);
+    this.#ctx.arc(this.#centerX, this.#centerY, scaledHalfR, -Math.PI / 2, 0);
+    this.#ctx.closePath();
+    this.#ctx.fill();
 
-        this.#ctx.moveTo(this.#centerX, this.#centerY);
-        this.#ctx.arc(this.#centerX, this.#centerY, scaledHalfR, Math.PI, 0.5 * Math.PI, true);
-        this.#ctx.fill();
-    }
+    this.#ctx.beginPath();
+    this.#ctx.moveTo(this.#centerX, this.#centerY);
+    this.#ctx.lineTo(this.#centerX - scaledHalfR, this.#centerY);
+    this.#ctx.lineTo(this.#centerX, this.#centerY + scaledR);
+    this.#ctx.closePath();
+    this.#ctx.fill();
+}
 
     #drawAxes(r) {
         this.#ctx.strokeStyle = '#c9d1d9';
