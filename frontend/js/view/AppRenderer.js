@@ -28,7 +28,7 @@ export class AppRenderer{
     #renderResults(points){
         const tbody = document.querySelector('#table-results tbody');
         tbody.replaceChildren(...points.map(p => this.#row([
-            p.x, p.y, p.r, formatTime(p.time), p.hit ? 'Hit' : 'Miss'
+            p.x, p.y, p.r, formatTime(p.time), (p.execTimeNs / 1000).toFixed(1), p.hit ? 'Hit' : 'Miss'
         ])));
     }
 

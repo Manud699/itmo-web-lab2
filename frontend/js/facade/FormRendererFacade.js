@@ -1,3 +1,5 @@
+import { formatTime } from '../view/AppRenderer.js';
+
 export class FormRendererFacade {
     #store;
     #history;
@@ -37,6 +39,7 @@ export class FormRendererFacade {
         try {
             const data = await this.#server.results();
             this.#store.setPoints(data.history);
+            this.#showServerTime(data.currentTime);
             this.#showStatus('');
         } catch (e) {
             this.#showStatus(e.message);
@@ -108,6 +111,7 @@ export class FormRendererFacade {
             const data = await this.#server.check(x, y, r);
             this.#store.setPoints(data.history);
             this.#history.record('ADD_POINT', null, data.result, this.#store.createMemento());
+            this.#showServerTime(data.currentTime);
             this.#showStatus('');
         } catch (e) {
             this.#showStatus(e.message);
@@ -123,6 +127,10 @@ export class FormRendererFacade {
 
     #showStatus(message) {
         document.getElementById('server-status').textContent = message;
+    }
+
+    #showServerTime(ms) {
+        document.getElementById('server-time').textContent = `Server time: ${formatTime(ms)}`;
     }
 
     #handleClear() {
