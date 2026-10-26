@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface ResultRepository {
 
-    void add(HitResult hitResult);
-    List<HitResult> findAll();
+    void add(String sessionId, HitResult hitResult);
+    List<HitResult> findAll(String sessionId);
 }

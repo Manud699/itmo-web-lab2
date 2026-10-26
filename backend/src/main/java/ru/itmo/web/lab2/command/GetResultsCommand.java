@@ -20,7 +20,7 @@ public class GetResultsCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        String body =jsonWriter.writeResultsResponse(repository.findAll(), Instant.now());
+        String body =jsonWriter.writeResultsResponse(repository.findAll(request.sessionId()), Instant.now());
         return new Response(200, Json.CONTENT_TYPE, body);
     }
 }

@@ -34,7 +34,7 @@ public class CheckPointCommand implements Command {
         long timeExecutionNs =  System.nanoTime() - time;
         Instant now = Instant.now();
         HitResult hitResult = new HitResult(point, isHit, now, timeExecutionNs);
-        repository.add(hitResult);
-        return new Response(200, Json.CONTENT_TYPE, resultJsonWriter.writeCheckResponse(hitResult, repository.findAll(), now));
+        repository.add(request.sessionId(), hitResult);
+        return new Response(200, Json.CONTENT_TYPE, resultJsonWriter.writeCheckResponse(hitResult, repository.findAll(request.sessionId()), now));
     }
 }
