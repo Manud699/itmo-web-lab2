@@ -23,10 +23,12 @@ export class AppBootstrapper {
         this.#initValidators();
         this.#initModel();
         this.#initView();
+        this.#initTransport();
         this.#initController();
         this.#connectObservers();
         this.#restoreOrStart();     
         this.#controller.setupEventListeners();
+        this.#controller.loadResults();
     }
 
     #initValidators() {
@@ -55,7 +57,8 @@ export class AppBootstrapper {
             this.#store,
             this.#history,
             this.#formValidator,
-            this.#fieldValidators
+            this.#fieldValidators,
+            this.#server
         );
     }
 
@@ -83,9 +86,8 @@ export class AppBootstrapper {
         }
     }
 
-    #initTrasnport(){
+    #initTransport() {
         const SERVER_URL = '/fcgi-bin/hello-world.jar';
         this.#server = new ServerClient(SERVER_URL, 5000);
-        this.#controller.loadResults(); 
     }
 }
