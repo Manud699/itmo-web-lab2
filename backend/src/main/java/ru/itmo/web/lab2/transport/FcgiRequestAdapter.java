@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class FcgiRequestAdapter {
 
     public static final String SESSION_COOKIE = "SESSIONID";
+    private static final int MAX_BODY_BYTES = 4096;
     private static final Pattern UUID_FORMAT =
             Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
@@ -47,6 +48,12 @@ public class FcgiRequestAdapter {
             contentLength = Integer.parseInt(lengthText.trim());
         } catch (NumberFormatException e) {
             throw new HttpException(400, "Invalid Content-Length");
+        }
+        if (contentLength < 0) {
+            throw new HttpException(400, "Invalid Content-Length");
+        }
+        if (contentLength > MAX_BODY_BYTES) {
+            throw new HttpException(413, "Request body is too large (max " + MAX_BODY_BYTES + " bytes)");
         }
 
         byte[] buffer = new byte[contentLength];

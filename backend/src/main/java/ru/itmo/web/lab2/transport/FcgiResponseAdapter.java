@@ -36,6 +36,7 @@ public class FcgiResponseAdapter {
             case 400 -> "Bad Request";
             case 404 -> "Not Found";
             case 405 -> "Method Not Allowed";
+            case 413 -> "Payload Too Large";
             default -> "Internal Server Error";
         };
     }
