@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lab 2 - Web</title>
+        <link href="../css/style.css" rel="stylesheet" type="text/css"/>
+        <script type="module" src="../js/Main.js" defer></script>
+    </head>
+
+    <body>
+        <header class="header-info">
+            <h1>Carlos Manuel Avendaño Duran</h1>
+            <p>Group P3217</p>
+            <p>Variant 98789</p>
+        </header>
+
+
+        <main>
+            <div id="left-panel">
+                <section class="card form-section">
+                    <form id="formulario">
+                        <div id="input-data">
+
+                            <div id="input-r" class="field">
+                                <p class="label-title">Change r*</p>
+                                <div class="chip-group">
+                                    <label class="chip"><input type="checkbox" name="inputR" value="1"><span>1</span></label>
+                                    <label class="chip"><input type="checkbox" name="inputR" value="1.5"><span>1.5</span></label>
+                                    <label class="chip"><input type="checkbox" name="inputR" value="2"><span>2</span></label>
+                                    <label class="chip"><input type="checkbox" name="inputR" value="2.5"><span>2.5</span></label>
+                                    <label class="chip"><input type="checkbox" name="inputR" value="3"><span>3</span></label>
+                                </div>
+
+                                <div id="input-check-r" class="error hidden">
+                                    <p class="error-text-r">
+                                        <svg class="icon-alert" data-component="Octicon" height="12" viewBox="0 0 12 12" version="1.1" width="12" data-view-component="true">
+                                            <path d="M4.855.708c.5-.896 1.79-.896 2.29 0l4.675 8.351a1.312 1.312 0 0 1-1.146 1.954H1.33A1.313 1.313 0 0 1 .183 9.058ZM7 7V3H5v4Zm-1 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path>
+                                        </svg>
+                                        <span class="msg-content"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div id="input-x" class="field">
+                                    <label class="label-title" for="selectX">Change x*</label>
+                                    <select id="selectX">
+                                        <option value="" disabled selected>Select an option</option>
+                                        <option value="-2">-2</option>
+                                        <option value="-1.5">-1.5</option>
+                                        <option value="-1">-1</option>
+                                        <option value="-0.5">-0.5</option>
+                                        <option value="0">0</option>
+                                        <option value="0.5">0.5</option>
+                                        <option value="1">1</option>
+                                        <option value="1.5">1.5</option>
+                                        <option value="2">2</option>
+                                    </select>
+                                    <div id="input-check-x" class="error hidden">
+                                        <p class="error-text-x">
+                                            <svg class="icon-alert" data-component="Octicon" height="12" viewBox="0 0 12 12" version="1.1" width="12" data-view-component="true">
+                                                <path d="M4.855.708c.5-.896 1.79-.896 2.29 0l4.675 8.351a1.312 1.312 0 0 1-1.146 1.954H1.33A1.313 1.313 0 0 1 .183 9.058ZM7 7V3H5v4Zm-1 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path>
+                                            </svg>
+                                            <span class="msg-content"></span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div id="input-y" class="field">
+                                    <label class="label-title" for="inputY">Change y*</label>
+                                    <input type="text" id="inputY" name="y" placeholder="-5 ... 3" autocomplete="off">
+                                    <div id="input-check-y" class="error hidden">
+                                        <p class="error-text-y">
+                                            <svg class="icon-alert" data-component="Octicon" height="12" viewBox="0 0 12 12" version="1.1" width="12" data-view-component="true">
+                                                <path d="M4.855.708c.5-.896 1.79-.896 2.29 0l4.675 8.351a1.312 1.312 0 0 1-1.146 1.954H1.33A1.313 1.313 0 0 1 .183 9.058ZM7 7V3H5v4Zm-1 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path>
+                                            </svg>
+                                            <span class="msg-content"></span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="container-submit-button">
+                                <button id="submit-btn" type="submit">
+                                    <span id="submit-button-content">
+                                        <span class="Button-label">
+                                            submit
+                                            <svg class="icon-flecha" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true">
+                                                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
+                                            </svg>
+                                        </span>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <p id="server-status" class="error" role="status"></p>
+                            <p id="server-time"></p>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="card results-section">
+                    <div class="section-head">
+                        <h2>Results</h2>
+                        <div id="container-clear-button">
+                            <button id="clear-btn" type="button">
+                                <span id="clear-button-content">
+                                    <svg class="icon-limpieza" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" fill="currentColor">
+                                        <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM6.5 1.75v1.25h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path>
+                                        <path d="M3.75 6a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 .75.75v6.25A2.25 2.25 0 0 1 10 14.5H6A2.25 2.25 0 0 1 3.75 12.25Zm1.5.75v5.5c0 .414.336.75.75.75h4a.75.75 0 0 0 .75-.75v-5.5h-5.5Z"></path>
+                                    </svg>
+                                    clear
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table id="table-results" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">X</th>
+                                    <th scope="col">Y</th>
+                                    <th scope="col">R</th>
+                                    <th scope="col">Time</th>
+                                    <th scope="col">Exec time (µs)</th>
+                                    <th scope="col">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div id="right-panel">
+                <section class="card canvas-card">
+                    <canvas id="canvas" width="500" height="500"></canvas>
+                </section>
+
+                <section class="card log-section">
+                    <div class="section-head">
+                        <h2>Action log</h2>
+                        <button id="clear-history-btn" class="ghost-btn" type="button">clear log</button>
+                    </div>
+                    <p class="log-hint"><kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> redo</p>
+
+                    <div class="table-wrap log-wrap">
+                        <table id="table-log" class="data-table log-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Action</th>
+                                    <th scope="col">Before</th>
+                                    <th scope="col">After</th>
+                                    <th scope="col">Time</th>
+                                    <th scope="col"><span class="sr-only">Restore</span></th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <details id="branches" class="branches hidden">
+                        <summary>Discarded branches (<span id="branches-count">0</span>)</summary>
+                        <div id="branches-list"></div>
+                    </details>
+                </section>
+            </div>
+        </main>
+
+        <footer class="footer-info">
+            <p>Lab 2 - Web Programming.</p>
+        </footer>
+
+    </body>
+
+</html>

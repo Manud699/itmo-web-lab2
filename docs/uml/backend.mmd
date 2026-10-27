@@ -1,0 +1,174 @@
+classDiagram
+direction TB
+
+namespace bootstrap {
+  class AppMain {
+    +main(String[] args)$
+  }
+  class Bootstrapper {
+    +createServer() FcgiServer
+    -createRouter(Json json) Router
+  }
+}
+
+namespace transport {
+  class FcgiServer {
+    -FcgiRequestAdapter requestAdapter
+    -FcgiResponseAdapter responseAdapter
+    -FCGIInterface fcgiInterface
+    -Router router
+    -ErrorHandler errorHandler
+    +start()
+    -handle() Response
+    -send(Response response)
+  }
+  class FcgiRequestAdapter {
+    +SESSION_COOKIE$ = "SESSIONID"
+    -MAX_BODY_BYTES$ = 4096
+    +readRequest() Request
+    -readSessionId(String cookieHeader) String
+    -readBody() String
+    -parseForm(String body) Map
+  }
+  class FcgiResponseAdapter {
+    +write(Response response)
+    -sessionCookie(Response response) String
+    -reasonPhrase(int status) String
+  }
+}
+
+namespace http {
+  class Request {
+    <<record>>
+    +String method
+    +String path
+    +Map params
+    +String sessionId
+    +param(String name) String
+    +withSessionId(String id) Request
+  }
+  class Response {
+    <<record>>
+    +int status
+    +String contentType
+    +String body
+    +String newSessionId
+    +withNewSession(String id) Response
+  }
+  class Command {
+    <<interface>>
+    +execute(Request request) Response
+  }
+  class Router {
+    -Map routes
+    +register(String method, String path, Command command)
+    +handle(Request request) Response
+  }
+  class HttpException {
+    -int status
+    +getStatus() int
+  }
+  class ErrorHandler {
+    <<interface>>
+    +handle(HttpException e) Response
+    +handleUnexpected(Exception e) Response
+  }
+  class JsonErrorHandler {
+    -Json json
+    -error(int status, String message) Response
+  }
+  class Json {
+    +CONTENT_TYPE$
+    +quote(String text) String
+  }
+}
+
+namespace command {
+  class CheckPointCommand {
+    -PointValidator validator
+    -AreaChecker areaChecker
+    -ResultRepository repository
+    -ResultJsonWriter resultJsonWriter
+    +execute(Request request) Response
+  }
+  class GetResultsCommand {
+    +execute(Request request) Response
+  }
+  class ClearResultsCommand {
+    +execute(Request request) Response
+  }
+  class ResultJsonWriter {
+    -Json json
+    +writeCheckResponse(HitResult r, List history, Instant now) String
+    +writeResultsResponse(List history, Instant now) String
+  }
+}
+
+namespace domain {
+  class PointValidator {
+    +validate(Map params) Point
+  }
+  class AreaChecker {
+    +isHit(Point p) boolean
+    -inCircle() boolean
+    -inRectangle() boolean
+    -inTriangle() boolean
+  }
+  class Point {
+    <<record>>
+    +BigDecimal x
+    +BigDecimal y
+    +BigDecimal r
+  }
+  class HitResult {
+    <<record>>
+    +Point point
+    +boolean hit
+    +Instant time
+    +long execTimeNs
+  }
+  class InvalidPointException
+}
+
+namespace repository {
+  class ResultRepository {
+    <<interface>>
+    +add(String sessionId, HitResult r)
+    +findAll(String sessionId) List
+    +clear(String sessionId)
+  }
+  class InMemoryResultRepository {
+    -Map historyBySession
+  }
+}
+
+AppMain ..> Bootstrapper : creates
+Bootstrapper ..> FcgiServer : builds and wires
+FcgiServer --> FcgiRequestAdapter
+FcgiServer --> FcgiResponseAdapter
+FcgiServer --> Router
+FcgiServer --> ErrorHandler
+FcgiRequestAdapter ..> Request : creates
+FcgiResponseAdapter ..> Response : writes
+Router o--> Command : method + path
+Router ..> HttpException : 404 / 405
+ErrorHandler <|.. JsonErrorHandler
+JsonErrorHandler --> Json
+Command <|.. CheckPointCommand
+Command <|.. GetResultsCommand
+Command <|.. ClearResultsCommand
+CheckPointCommand --> PointValidator
+CheckPointCommand --> AreaChecker
+CheckPointCommand --> ResultRepository
+CheckPointCommand --> ResultJsonWriter
+GetResultsCommand --> ResultRepository
+GetResultsCommand --> ResultJsonWriter
+ClearResultsCommand --> ResultRepository
+ClearResultsCommand --> ResultJsonWriter
+ResultJsonWriter --> Json
+PointValidator ..> Point : creates
+PointValidator ..> InvalidPointException : throws
+AreaChecker ..> Point
+HitResult --> Point
+ResultRepository <|.. InMemoryResultRepository
+InMemoryResultRepository o--> HitResult
