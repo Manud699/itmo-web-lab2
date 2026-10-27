@@ -21,3 +21,10 @@ tasks.test {
 }
 
 tasks.withType<JavaCompile> { options.release = 17 }
+// Runnable "fat" jar: our classes + the FastCGI library, started with `java -jar`
+tasks.jar {
+    archiveFileName.set("lab2-server.jar")
+    manifest { attributes["Main-Class"] = "ru.itmo.web.lab2.AppMain" }
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
