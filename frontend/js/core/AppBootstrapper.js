@@ -8,6 +8,7 @@ import { AppStore } from './AppStore.js';
 import { History } from './History.js';
 import { AppRenderer } from '../view/AppRenderer.js';
 import { ServerClient } from '../transport/ServerClient.js';
+import { AdminPanel } from '../facade/AdminPanel.js';
 
 export class AppBootstrapper {
     #fieldValidators;
@@ -18,6 +19,7 @@ export class AppBootstrapper {
     #renderer;
     #controller;
     #server;
+    #adminPanel;
 
     boot() {
         this.#initValidators();
@@ -28,6 +30,7 @@ export class AppBootstrapper {
         this.#connectObservers();
         this.#restoreOrStart();     
         this.#controller.setupEventListeners();
+        this.#adminPanel.setupEventListeners();
         this.#controller.loadResults();
     }
 
@@ -60,6 +63,7 @@ export class AppBootstrapper {
             this.#fieldValidators,
             this.#server
         );
+        this.#adminPanel = new AdminPanel(this.#server, () => this.#controller.loadResults());
     }
 
     #connectObservers() {

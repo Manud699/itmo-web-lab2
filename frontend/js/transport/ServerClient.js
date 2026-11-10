@@ -23,6 +23,18 @@ export class ServerClient {
         return this.#request('POST', '/clear');
     }
 
+    async adminLogin(password) {
+        return this.#request('POST', '/admin/login', new URLSearchParams({ password }));
+    }
+
+    async highest() {
+        return this.#request('GET', '/admin/highest');
+    }
+
+    async logout() {
+        return this.#request('POST', '/logout');
+    }
+
     async #request(method, path, body) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), this.#timeoutMs);

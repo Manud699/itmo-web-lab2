@@ -133,6 +133,23 @@
                         </table>
                     </div>
                 </section>
+
+                <section class="card admin-section">
+                    <div class="section-head">
+                        <h2>Session</h2>
+                        <span id="admin-role" class="admin-role">Role: USER</span>
+                    </div>
+                    <form id="admin-form" class="admin-row">
+                        <input id="admin-password" type="password" placeholder="Admin password"
+                               autocomplete="current-password" required>
+                        <button id="admin-login-btn" class="ghost-btn" type="submit">Login</button>
+                    </form>
+                    <div class="admin-row">
+                        <button id="highest-btn" class="ghost-btn" type="button">Highest point</button>
+                        <button id="logout-btn" class="ghost-btn" type="button">Logout</button>
+                    </div>
+                    <p id="admin-output" class="admin-output" role="status"></p>
+                </section>
             </div>
 
             <div id="right-panel">
