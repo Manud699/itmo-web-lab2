@@ -10,4 +10,5 @@ public interface ResultRepository {
     List<HitResult> findAll(String sessionId);
     void clear(String sessionId);
     void moveHistory(String fromSessionId, String toSessionId);
+    List<HitResult> findAllSessions();
 }

@@ -33,4 +33,13 @@ public class InMemoryResultRepository implements ResultRepository{
             historyBySession.put(toSessionId, history);
         }
     }
+
+    @Override
+    public List<HitResult> findAllSessions() {
+        List<HitResult> all = new ArrayList<>();
+        for (List<HitResult> history : historyBySession.values()) {
+            all.addAll(history);
+        }
+        return all;
+    }
 }

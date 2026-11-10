@@ -1,12 +1,7 @@
 package ru.itmo.web.lab2.bootstrap;
 
 import com.fastcgi.FCGIInterface;
-import ru.itmo.web.lab2.command.AdminLoginCommand;
-import ru.itmo.web.lab2.command.CheckPointCommand;
-import ru.itmo.web.lab2.command.ClearResultsCommand;
-import ru.itmo.web.lab2.command.GetResultsCommand;
-import ru.itmo.web.lab2.command.LogoutCommand;
-import ru.itmo.web.lab2.command.ResultJsonWriter;
+import ru.itmo.web.lab2.command.*;
 import ru.itmo.web.lab2.domain.AreaChecker;
 import ru.itmo.web.lab2.domain.PointValidator;
 import ru.itmo.web.lab2.http.ErrorHandler;
@@ -73,6 +68,9 @@ public class Bootstrapper {
         router.register("POST", "/admin/login",
                 new AdminLoginCommand(sessionManager, sessionCookies, repository,
                         System.getProperty("admin.password")));
+        router.register("GET", "/admin/highest",
+                new AdminOnlyCommand(sessionManager,
+                        new HighestPointCommand(repository, resultJsonWriter)));
         return router;
     }
 }

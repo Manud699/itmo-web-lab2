@@ -5,6 +5,7 @@ import ru.itmo.web.lab2.http.Json;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 
 public class ResultJsonWriter {
@@ -43,6 +44,12 @@ public class ResultJsonWriter {
 
     public String writeResultsResponse(List<HitResult> history, Instant now) {
         return "{\"history\":" + writeHistory(history)
+                + ",\"currentTime\":" + now.toEpochMilli() + "}";
+    }
+
+    public String writeHighestResponse(Optional<HitResult> highest, int total, Instant now) {
+        return "{\"highest\":" + highest.map(this::writeResult).orElse("null")
+                + ",\"total\":" + total
                 + ",\"currentTime\":" + now.toEpochMilli() + "}";
     }
 
