@@ -13,9 +13,13 @@ import ru.itmo.web.lab2.http.JsonErrorHandler;
 import ru.itmo.web.lab2.http.Router;
 import ru.itmo.web.lab2.repository.InMemoryResultRepository;
 import ru.itmo.web.lab2.repository.ResultRepository;
+import ru.itmo.web.lab2.session.SessionManager;
 import ru.itmo.web.lab2.transport.FcgiRequestAdapter;
 import ru.itmo.web.lab2.transport.FcgiResponseAdapter;
 import ru.itmo.web.lab2.transport.FcgiServer;
+
+import java.time.Clock;
+import java.time.Duration;
 
 /**
  * Creates every object once and connects them through constructors.
@@ -23,24 +27,32 @@ import ru.itmo.web.lab2.transport.FcgiServer;
  */
 public class Bootstrapper {
 
-    public FcgiServer createServer() {  
+    private static final long DEFAULT_SESSION_TIMEOUT_SECONDS = 1800;
+
+    public FcgiServer createServer() {
         Json json = new Json();
         ErrorHandler errorHandler = new JsonErrorHandler(json);
-        Router router = createRouter(json);
+        ResultRepository repository = new InMemoryResultRepository();
+        Router router = createRouter(json, repository);
+
+        Duration sessionTimeout = Duration.ofSeconds(
+                Long.getLong("session.timeout.seconds", DEFAULT_SESSION_TIMEOUT_SECONDS));
+        SessionManager sessionManager =
+                new SessionManager(sessionTimeout, Clock.systemUTC(), repository::clear);
 
         return new FcgiServer(
                 new FcgiRequestAdapter(),
                 errorHandler,
                 router,
-                new FcgiResponseAdapter(),
-                new FCGIInterface());
+                new FcgiResponseAdapter(sessionTimeout),
+                new FCGIInterface(),
+                sessionManager);
     }
 
-    private Router createRouter(Json json) {
+    private Router createRouter(Json json, ResultRepository repository) {
         ResultJsonWriter resultJsonWriter = new ResultJsonWriter(json);
         PointValidator validator = new PointValidator();
         AreaChecker areaChecker = new AreaChecker();
-        ResultRepository repository = new InMemoryResultRepository();
 
         Router router = new Router();
         router.register("POST", "/check",
