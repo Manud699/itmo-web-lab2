@@ -3,6 +3,7 @@ package ru.itmo.web.lab2.transport;
 import com.fastcgi.FCGIInterface;
 import ru.itmo.web.lab2.http.*;
 import ru.itmo.web.lab2.session.Session;
+import ru.itmo.web.lab2.session.SessionCookies;
 import ru.itmo.web.lab2.session.SessionManager;
 
 import java.io.IOException;
@@ -18,19 +19,22 @@ public class FcgiServer {
     private final Router router;
     private final ErrorHandler errorHandler;
     private final SessionManager sessionManager;
+    private final SessionCookies sessionCookies;
 
     public FcgiServer(FcgiRequestAdapter requestAdapter,
                       ErrorHandler errorHandler,
                       Router router,
                       FcgiResponseAdapter responseAdapter,
                       FCGIInterface fcgiInterface,
-                      SessionManager sessionManager) {
+                      SessionManager sessionManager,
+                      SessionCookies sessionCookies) {
         this.requestAdapter = requestAdapter;
         this.errorHandler = errorHandler;
         this.router = router;
         this.responseAdapter = responseAdapter;
         this.fcgiInterface = fcgiInterface;
         this.sessionManager = sessionManager;
+        this.sessionCookies = sessionCookies;
     }
 
     public void start() {
@@ -44,7 +48,10 @@ public class FcgiServer {
         try {
             Request request = requestAdapter.readRequest();
             Session session = sessionManager.resolve(request.sessionId());
-            return router.handle(request.withSessionId(session.id())).withNewSession(session.id());
+            Response response = router.handle(request.withSessionId(session.id()));
+            return response.cookie() != null
+                    ? response
+                    : response.withCookie(sessionCookies.create(session.id()));
         } catch (HttpException e) {
             return errorHandler.handle(e);
         } catch (Exception e) {

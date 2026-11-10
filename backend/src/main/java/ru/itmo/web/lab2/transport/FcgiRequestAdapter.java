@@ -3,6 +3,7 @@ package ru.itmo.web.lab2.transport;
 import com.fastcgi.FCGIInterface;
 import ru.itmo.web.lab2.http.HttpException;
 import ru.itmo.web.lab2.http.Request;
+import ru.itmo.web.lab2.session.SessionCookies;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -16,7 +17,6 @@ import java.util.regex.Pattern;
  */
 public class FcgiRequestAdapter {
 
-    public static final String SESSION_COOKIE = "SESSIONID";
     private static final int MAX_BODY_BYTES = 4096;
     private static final Pattern UUID_FORMAT =
             Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
@@ -33,7 +33,7 @@ public class FcgiRequestAdapter {
     private String readSessionId(String cookieHeader) {
         for (String cookie : cookieHeader.split(";")) {
             String[] parts = cookie.trim().split("=", 2);
-            if (parts.length == 2 && parts[0].equals(SESSION_COOKIE)) {
+            if (parts.length == 2 && parts[0].equals(SessionCookies.NAME)) {
                 return UUID_FORMAT.matcher(parts[1]).matches() ? parts[1] : null;
             }
         }

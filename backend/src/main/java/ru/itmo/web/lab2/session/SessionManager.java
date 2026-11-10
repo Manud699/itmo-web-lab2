@@ -43,6 +43,12 @@ public class SessionManager {
         return timeout;
     }
 
+    public void invalidate(String sessionId) {
+        if (sessions.remove(sessionId) != null) {
+            onExpired.accept(sessionId);
+        }
+    }
+
     private void removeExpired(Instant now) {
         Iterator<Session> it = sessions.values().iterator();
         while (it.hasNext()) {

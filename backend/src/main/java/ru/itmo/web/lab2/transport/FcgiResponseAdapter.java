@@ -4,37 +4,22 @@ import ru.itmo.web.lab2.http.Response;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 
 /**
  * Output adapter: writes a Response to stdout as raw HTTP (Apache runs us with -nph).
  */
 public class FcgiResponseAdapter {
 
-    private final Duration sessionTimeout;
-
-    public FcgiResponseAdapter(Duration sessionTimeout){
-        this.sessionTimeout = sessionTimeout;
-    }
-
     public void write(Response response) throws IOException {
         byte[] bodyBytes = response.body().getBytes(StandardCharsets.UTF_8);
         String head = "HTTP/1.1 " + response.status() + " " + reasonPhrase(response.status()) + "\r\n"
                 + "Content-Type: " + response.contentType() + "\r\n"
                 + "Content-Length: " + bodyBytes.length + "\r\n"
-                + sessionCookie(response)
+                + (response.cookie() == null ? "" : "Set-Cookie: " + response.cookie().toHeader() + "\r\n")
                 + "\r\n";
         System.out.write(head.getBytes(StandardCharsets.UTF_8));
         System.out.write(bodyBytes);
         System.out.flush();
-    }
-
-
-    private String sessionCookie(Response response) {
-        if (response.newSessionId() == null) return "";
-        return "Set-Cookie: " + FcgiRequestAdapter.SESSION_COOKIE + "=" + response.newSessionId()
-                + "; Max-Age=" + sessionTimeout.toSeconds()
-                + "; Path=/; HttpOnly; SameSite=Strict\r\n";
     }
 
 
