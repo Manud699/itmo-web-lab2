@@ -43,6 +43,23 @@ public class SessionManager {
         return timeout;
     }
 
+    public boolean isAdmin(String sessionId) {
+        Session session = sessions.get(sessionId);
+        return session != null && session.role() == Role.ADMIN;
+    }
+
+    /**
+     * Login: the old id is thrown away and an ADMIN session with a new id is created.
+     * Changing the id prevents session fixation (an attacker cannot reuse an id he already knew).
+     */
+    public Session promoteToAdmin(String oldSessionId) {
+        sessions.remove(oldSessionId);
+        Session session = new Session(UUID.randomUUID().toString(), clock.instant());
+        session.setRole(Role.ADMIN);
+        sessions.put(session.id(), session);
+        return session;
+    }
+
     public void invalidate(String sessionId) {
         if (sessions.remove(sessionId) != null) {
             onExpired.accept(sessionId);

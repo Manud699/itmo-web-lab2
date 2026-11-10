@@ -1,6 +1,7 @@
 package ru.itmo.web.lab2.bootstrap;
 
 import com.fastcgi.FCGIInterface;
+import ru.itmo.web.lab2.command.AdminLoginCommand;
 import ru.itmo.web.lab2.command.CheckPointCommand;
 import ru.itmo.web.lab2.command.ClearResultsCommand;
 import ru.itmo.web.lab2.command.GetResultsCommand;
@@ -69,6 +70,9 @@ public class Bootstrapper {
                 new ClearResultsCommand(resultJsonWriter, repository));
         router.register("POST", "/logout",
                 new LogoutCommand(sessionManager, sessionCookies));
+        router.register("POST", "/admin/login",
+                new AdminLoginCommand(sessionManager, sessionCookies, repository,
+                        System.getProperty("admin.password")));
         return router;
     }
 }

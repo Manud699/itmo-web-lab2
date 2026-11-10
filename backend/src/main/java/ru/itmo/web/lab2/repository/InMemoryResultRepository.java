@@ -25,4 +25,12 @@ public class InMemoryResultRepository implements ResultRepository{
     public void clear(String sessionId){
         historyBySession.remove(sessionId);
     }
+
+    @Override
+    public void moveHistory(String fromSessionId, String toSessionId) {
+        List<HitResult> history = historyBySession.remove(fromSessionId);
+        if (history != null) {
+            historyBySession.put(toSessionId, history);
+        }
+    }
 }
