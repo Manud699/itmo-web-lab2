@@ -1,0 +1,149 @@
+classDiagram
+direction TB
+
+namespace core {
+  class Main {
+    <<module>>
+  }
+  class AppBootstrapper {
+    -store
+    -history
+    -renderer
+    -controller
+    -server
+    +boot()
+    -initValidators()
+    -initModel()
+    -initView()
+    -initTransport()
+    -initController()
+    -connectObservers()
+    -restoreOrStart()
+  }
+  class Observable {
+    +subscribe(listener)
+    +notify(payload)
+  }
+  class AppStore {
+    -state
+    +getState()
+    +setX(x)
+    +setY(y)
+    +setR(r)
+    +setPoints(points)
+    +createMemento()
+    +restoreMemento(memento)
+  }
+  class History {
+    +record(type, oldValue, newValue, memento)
+    +restore(id)
+    +undo()
+    +redo()
+    +restoreFromBranch(branchId, entryId)
+    +clearHistory(memento)
+    +current()
+    +getView()
+    +toJSON()
+    +load(data)
+  }
+}
+
+namespace facade {
+  class FormRendererFacade {
+    -store
+    -history
+    -formValidator
+    -fieldValidators
+    -server
+    +setupEventListeners()
+    +loadResults()
+    +restore(id)
+    +restoreFromBranch(branchId, entryId)
+    -handleFormSubmit(event)
+    -handleFieldChange(field, raw)
+    -handleClear()
+    -handleClearHistory()
+  }
+}
+
+namespace transport {
+  class ServerClient {
+    -baseUrl = /fcgi-bin/hello-world.jar
+    -timeoutMs = 5000
+    +check(x, y, r) Promise
+    +results() Promise
+    +clear() Promise
+    -request(method, path, body)
+    -readJson(response)
+  }
+  class ServerError {
+    +status
+  }
+}
+
+namespace validators {
+  class BaseValidator {
+    <<abstract>>
+    +validate(value) ResultValidation
+  }
+  class OptionsValidator {
+    -allowedOptions
+    +validate(value)
+  }
+  class RangeValidator {
+    -min
+    -max
+    +validate(value)
+  }
+  class ValidateForm {
+    +validateForm(xRaw, yRaw, rRaw) ResultValidation
+  }
+  class ResultValidation {
+    +success(data)$
+    +fail(error)$
+  }
+}
+
+namespace view {
+  class AppRenderer {
+    -plane
+    +render(state)
+    +renderLog(view, callbacks)
+  }
+  class CoordinatePlaneRenderer {
+    -canvas
+    -ctx
+    +drawBaseGraph(r)
+    +drawPoint(x, y, isHit)
+    -drawHitShapes(r)
+    -drawAxes(r)
+  }
+}
+
+namespace repository {
+  class LocalStorageRep {
+    -storageKey
+    +load()
+    +save(obj)
+    +clear()
+  }
+}
+
+Main ..> AppBootstrapper : boot()
+AppBootstrapper ..> FormRendererFacade : creates and injects
+AppBootstrapper ..> ServerClient : creates
+AppBootstrapper ..> LocalStorageRep : saves History
+Observable <|-- AppStore
+Observable <|-- History
+FormRendererFacade --> AppStore
+FormRendererFacade --> History
+FormRendererFacade --> ValidateForm
+FormRendererFacade --> ServerClient : fetch POST check, GET results, POST clear
+ServerClient ..> ServerError : throws
+ValidateForm --> BaseValidator : x, y, r
+BaseValidator <|-- OptionsValidator
+BaseValidator <|-- RangeValidator
+BaseValidator ..> ResultValidation
+AppStore ..> AppRenderer : notify(state)
+History ..> AppRenderer : notify(view)
+AppRenderer --> CoordinatePlaneRenderer
